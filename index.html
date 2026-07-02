@@ -35,31 +35,8 @@
     position: relative;
   }
 
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 999;
-    background: repeating-linear-gradient(
-      0deg,
-      rgba(0,0,0,0.09) 0px,
-      rgba(0,0,0,0.09) 1px,
-      transparent 1px,
-      transparent 3px
-    );
-    opacity: 0.35;
-    mix-blend-mode: multiply;
-  }
-
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 998;
-    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.45) 100%);
-  }
+  /* scanlines/vignette are intentionally confined to .crt-screen only —
+     the rest of the page stays quiet so the monitor is the one bold moment */
 
   h1, h2, h3, .display {
     font-family: 'IBM Plex Mono', monospace;
@@ -72,6 +49,7 @@
 
   .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
 
+  /* ---------- NAV ---------- */
   nav {
     display: flex;
     align-items: center;
@@ -108,6 +86,7 @@
   }
   nav .cta-small:hover { color: var(--amber); border-color: var(--amber-dim); }
 
+  /* ---------- HERO ---------- */
   .hero { padding: 56px 24px 40px; text-align: center; }
 
   .terminal-line {
@@ -194,6 +173,7 @@
   }
   .btn-ghost:hover { border-color: var(--green); }
 
+  /* ---------- SHELF VISUAL ---------- */
   .shelf {
     margin: 52px auto 0;
     max-width: 700px;
@@ -219,7 +199,11 @@
   .spine.played { background: linear-gradient(180deg, var(--green), #2E9E67); }
   .spine.backlog { background: linear-gradient(180deg, var(--amber-dim), #4A3714); }
 
-  @media (prefers-reduced-motion: reduce) { .spine { animation: none; opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .spine { animation: none; opacity: 1; transform: none; }
+    .cursor, .cursor2 { animation: none; opacity: 1; }
+    .big-stat.flicker { animation: none; }
+  }
 
   .shelf-legend {
     max-width: 700px;
@@ -235,6 +219,7 @@
   .dot.played { background: var(--green); }
   .dot.backlog { background: var(--amber-dim); }
 
+  /* ---------- SECTION SHARED ---------- */
   section { padding: 96px 24px; }
   .section-head { text-align: center; max-width: 620px; margin: 0 auto 52px; }
   .section-head .eyebrow-line {
@@ -250,6 +235,7 @@
   }
   .section-head p { color: var(--text-dim); font-size: 15.5px; }
 
+  /* ---------- CRT MONITOR FRAME (signature element) ---------- */
   .crt-frame {
     max-width: 780px;
     margin: 0 auto;
@@ -262,6 +248,7 @@
     position: relative;
   }
   .crt-frame::before {
+    /* power LED */
     content: '';
     position: absolute;
     bottom: 12px;
@@ -274,7 +261,7 @@
   .crt-frame .brand-label {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 10px;
-    color: #4A4A44;
+    color: #6B6B60;
     letter-spacing: 0.1em;
     text-align: center;
     margin-top: 14px;
@@ -290,6 +277,7 @@
       inset 0 0 60px rgba(0,0,0,0.65);
   }
   .crt-screen::before {
+    /* scanlines specific to the screen, slightly stronger */
     content: '';
     position: absolute;
     inset: 0;
@@ -304,6 +292,7 @@
     );
   }
   .crt-screen::after {
+    /* curvature vignette */
     content: '';
     position: absolute;
     inset: 0;
@@ -314,6 +303,7 @@
 
   .crt-inner { position: relative; z-index: 2; }
 
+  /* ---------- CALCULATOR ---------- */
   .calc-inputs {
     padding: 36px 36px 28px;
     display: grid;
@@ -368,6 +358,7 @@
     margin-top: 16px;
   }
 
+  /* ---------- FEATURES ---------- */
   .features {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -394,6 +385,7 @@
   .feature h3 { font-size: 16px; margin-bottom: 8px; font-weight: 600; }
   .feature p { font-size: 13.5px; color: var(--text-dim); font-family: 'Inter', sans-serif; }
 
+  /* ---------- PRICING ---------- */
   .price-cards {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -414,7 +406,9 @@
     display: block;
   }
   .price-card:hover { transform: translateY(-3px); }
-  .price-card.selected { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber); }
+  .price-card.selected,
+  .price-card:has(input:checked) { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber); }
+  .price-card:focus-within { outline: 2px solid var(--green); outline-offset: 3px; }
   .price-card input { position: absolute; opacity: 0; pointer-events: none; }
 
   .price-card .tag { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--amber); margin-bottom: 12px; }
@@ -425,6 +419,7 @@
   .price-card li { font-size: 13px; color: var(--text-dim); padding: 4px 0 4px 20px; position: relative; font-family: 'Inter', sans-serif; }
   .price-card li::before { content: '>'; position: absolute; left: 0; color: var(--green); font-family: 'IBM Plex Mono', monospace; }
 
+  /* ---------- WAITLIST ---------- */
   .waitlist { max-width: 480px; margin: 0 auto; text-align: center; }
   .waitlist form { display: flex; gap: 10px; margin-top: 26px; }
   @media (max-width: 500px) { .waitlist form { flex-direction: column; } }
@@ -490,8 +485,8 @@
 
 <header class="hero">
   <div class="terminal-line"><span class="prompt">$</span>checando sua biblioteca de jogos<span class="cursor2"></span></div>
-  <h1>Você tem <em>200 jogos</em> parados na sua biblioteca. Isso vai organizar isso.</h1>
-  <p class="sub">Backloggr importa sua Steam, mostra o que vale a pena jogar agora e transforma aquela culpa de comprar-e-nunca-jogar em um plano de verdade.</p>
+  <h1>Você tem <em id="heroGamesCount">200 jogos</em> parados na sua biblioteca. Vamos organizar isso.</h1>
+  <p class="sub">Backloggr importa sua Steam, mostra o que vale a pena jogar agora e transforma aquela culpa de comprar e nunca jogar em um plano de verdade.</p>
   <a href="#calc" class="btn-primary">&gt; calcular meu backlog</a>
   <a href="#waitlist" class="btn-ghost">quero ser avisado</a>
 
@@ -517,9 +512,9 @@
             <div class="field">
               <div class="value-row">
                 <label for="games">JOGOS PARADOS</label>
-                <span class="val mono" id="gamesVal">120</span>
+                <span class="val mono" id="gamesVal">200</span>
               </div>
-              <input type="range" id="games" min="10" max="500" value="120" step="5">
+              <input type="range" id="games" min="10" max="500" value="200" step="5">
             </div>
             <div class="field">
               <div class="value-row">
@@ -542,7 +537,7 @@
       </div>
       <div class="brand-label">BACKLOGGR // MONITOR-01</div>
     </div>
-    <p class="calc-fine">*estimativa em R$ 30/jogo — pra ilustrar, não é ciência</p>
+    <p class="calc-fine" id="calcFine">*média de R$ 50/jogo (a maioria do backlog costuma ser jogo normal ou de promoção, com Triple A na minoria) — pra ilustrar, não é ciência</p>
   </div>
 </section>
 
@@ -661,6 +656,9 @@
   const totalHours = document.getElementById('totalHours');
   const moneyWasted = document.getElementById('moneyWasted');
   const atCurrentPace = document.getElementById('atCurrentPace');
+  const calcFine = document.getElementById('calcFine');
+  const heroGamesCount = document.getElementById('heroGamesCount');
+  const pricePerGame = 50;
 
   function fmtInt(n) { return n.toLocaleString('pt-BR'); }
 
@@ -669,12 +667,13 @@
     const hours = parseInt(hoursInput.value, 10);
     gamesVal.textContent = games;
     hoursVal.textContent = hours;
+    heroGamesCount.textContent = games + ' jogos';
 
     const total = games * hours;
     const years = total / 365;
     totalHours.textContent = fmtInt(total) + 'h';
     yearsResult.textContent = years.toFixed(1).replace('.', ',') + ' ANOS';
-    moneyWasted.textContent = 'R$ ' + fmtInt(games * 30);
+    moneyWasted.textContent = 'R$ ' + fmtInt(games * pricePerGame);
     atCurrentPace.textContent = games > 60 ? 'NUNCA' : 'TALVEZ';
 
     yearsResult.classList.remove('flicker');
@@ -698,7 +697,6 @@
     });
   });
 
-  
   const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxlillw8wIo5QIUXAAehGbr7Epo_VWzg1-0iCsDUg6vD6pJ6RCOn-kTjLDQkPxdIzYWMQ/exec';
 
   // Waitlist form — envia pro Google Apps Script / Google Sheets
