@@ -30,6 +30,8 @@ Na Vercel: ao importar o repositório, defina **Root Directory = `web`** e cadas
 - `400 INVALID_INPUT` · `404 PROFILE_NOT_FOUND` · `403 PRIVATE_PROFILE` · `403 PRIVATE_GAMES` · `502 STEAM_UNAVAILABLE` → `{ error: { code, message } }`
 - `warnings`: `PLAYTIME_HIDDEN` (tudo com 0h: provavelmente tempo de jogo oculto) e `PRICES_PARTIAL` (valor da pilha incompleto)
 
+Jogos com `isFree: true` (a loja diz que são gratuitos, ou têm "Playtest" no nome) nunca entram na pilha.
+
 Quando a pessoa marca um jogo, a tela recalcula com `computeStats(games, userStates)`, `pickSuggestions(games, userStates)` e `drawFromPile(...)` pro "sortear de novo".
 
 ## O que conferir no primeiro teste com a chave real

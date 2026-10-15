@@ -41,7 +41,14 @@ test('autoStateFor usa o limite de 2h', () => {
   assert.equal(autoStateFor(120), 'played');
 });
 
-function game(appId: number, name: string, playtimeMinutes: number, priceCents: number | null, lastPlayedAt: string | null = null): Game {
+function game(
+  appId: number,
+  name: string,
+  playtimeMinutes: number,
+  priceCents: number | null,
+  lastPlayedAt: string | null = null,
+  isFree = false,
+): Game {
   return {
     appId,
     name,
@@ -49,6 +56,7 @@ function game(appId: number, name: string, playtimeMinutes: number, priceCents: 
     lastPlayedAt,
     priceCents,
     autoState: autoStateFor(playtimeMinutes),
+    isFree,
     coverUrl: '',
     headerUrl: '',
   };
@@ -60,33 +68,34 @@ const library: Game[] = [
   game(50, 'Disco Elysium', 0, 8999),
   game(40, 'Dota 2', 30000, null, '2026-10-01T00:00:00.000Z'),
   game(30, 'Elden Ring', 6000, null, '2026-08-01T00:00:00.000Z'),
-  game(70, 'Free game', 0, null),
+  game(70, 'Free game', 0, null, null, true),
+  game(90, 'Grátis mal começado', 30, null, '2026-10-01T00:00:00.000Z', true),
   game(60, 'Hades', 90, 4799, '2025-01-01T00:00:00.000Z'),
   game(10, 'Hollow Knight', 0, 4699),
 ];
 
 test('computeStats sem marcações', () => {
   assert.deepEqual(computeStats(library), {
-    totalGames: 8,
-    neverPlayed: 4,
+    totalGames: 9,
+    neverPlayed: 3,
     barelyPlayed: 2,
-    pileCount: 6,
-    pilePercent: 75,
-    estimatedHoursToClear: 108,
-    yearsAtOneHourPerDay: 0.3,
+    pileCount: 5,
+    pilePercent: 56,
+    estimatedHoursToClear: 90,
+    yearsAtOneHourPerDay: 0.2,
     pileValueCents: 4699 + 3699 + 8999 + 4799,
-    pileGamesWithoutPrice: 2,
-    totalPlaytimeHours: 602,
+    pileGamesWithoutPrice: 1,
+    totalPlaytimeHours: 603,
   });
 });
 
 test('computeStats tira da pilha o que a pessoa marcou', () => {
   const stats = computeStats(library, { 50: 'finished', 20: 'dropped', 30: 'finished' });
-  assert.equal(stats.pileCount, 4);
-  assert.equal(stats.neverPlayed, 3);
+  assert.equal(stats.pileCount, 3);
+  assert.equal(stats.neverPlayed, 2);
   assert.equal(stats.barelyPlayed, 1);
   assert.equal(stats.pileValueCents, 4699 + 4799);
-  assert.equal(stats.totalGames, 8);
+  assert.equal(stats.totalGames, 9);
 });
 
 test('computeStats com biblioteca vazia não divide por zero', () => {
@@ -94,6 +103,14 @@ test('computeStats com biblioteca vazia não divide por zero', () => {
   assert.equal(stats.pilePercent, 0);
   assert.equal(stats.pileCount, 0);
   assert.equal(stats.yearsAtOneHourPerDay, 0);
+});
+
+test('jogo grátis nunca entra na pilha nem nas sugestões', () => {
+  const free = library.filter((g) => g.isFree).map((g) => g.appId);
+  for (let i = 0; i < 20; i++) {
+    for (const s of pickSuggestions(library, {}, () => i / 20)) assert.ok(!free.includes(s.game.appId));
+  }
+  assert.equal(drawFromPile(library, {}, new Set([10, 20, 50, 60, 80])), null);
 });
 
 test('pickSuggestions: retomar, mais caro e sorteio, sem repetir', () => {
@@ -109,7 +126,7 @@ test('pickSuggestions: retomar, mais caro e sorteio, sem repetir', () => {
 });
 
 test('pickSuggestions respeita marcações e pilha pequena', () => {
-  const marked = { 20: 'finished', 60: 'dropped', 50: 'playing', 80: 'dropped', 70: 'dropped' } as const;
+  const marked = { 20: 'finished', 60: 'dropped', 50: 'playing', 80: 'dropped' } as const;
   const suggestions = pickSuggestions(library, marked, () => 0.99);
   assert.deepEqual(
     suggestions.map((s) => [s.kind, s.game.name]),
@@ -119,10 +136,10 @@ test('pickSuggestions respeita marcações e pilha pequena', () => {
 });
 
 test('drawFromPile nunca devolve excluído nem jogo fora da pilha', () => {
-  const exclude = new Set([10, 20, 50, 60, 70]);
+  const exclude = new Set([10, 20, 50, 60]);
   for (let i = 0; i < 20; i++) {
     const drawn = drawFromPile(library, {}, exclude, () => i / 20);
     assert.equal(drawn?.name, 'Delisted');
   }
-  assert.equal(drawFromPile(library, {}, new Set([10, 20, 50, 60, 70, 80])), null);
+  assert.equal(drawFromPile(library, {}, new Set([10, 20, 50, 60, 80])), null);
 });
