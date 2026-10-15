@@ -32,6 +32,7 @@ const PROFILES = {
       g(60, 'Hades', 90, JAN_2025),
       g(70, 'Free game', 0),
       g(80, 'Delisted', 0),
+      g(90, 'Algum Jogo Playtest', 0),
     ],
   },
   '76561198000000002': { visibility: 1, name: 'Privado' }, // perfil privado

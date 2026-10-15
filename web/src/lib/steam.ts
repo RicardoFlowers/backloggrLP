@@ -161,12 +161,26 @@ function chunk<T>(items: T[], size: number): T[][] {
   return chunks;
 }
 
+/** Playtests são apps grátis separados do jogo ("Fulano Playtest"). */
+const PLAYTEST = /\bplaytest\b/i;
+
+interface StoreInfo {
+  /** appId -> preço cheio em centavos */
+  prices: Map<number, number>;
+  /** appIds que a loja informa como gratuitos */
+  free: Set<number>;
+  /** false se algum lote falhou */
+  complete: boolean;
+}
+
 /**
- * Preço cheio atual na Steam BR. Não é o que a pessoa pagou: a Steam não expõe isso.
- * Busca em lotes com cache de 1 dia. Lote que falha não derruba o resultado, só marca como incompleto.
+ * Preço cheio atual na Steam BR (não é o que a pessoa pagou: a Steam não expõe isso)
+ * e quais jogos são gratuitos. Busca em lotes com cache de 1 dia.
+ * Lote que falha não derruba o resultado, só marca como incompleto.
  */
-async function getPricesBRL(appIds: number[]): Promise<{ prices: Map<number, number>; complete: boolean }> {
+async function getStoreInfo(appIds: number[]): Promise<StoreInfo> {
   const prices = new Map<number, number>();
+  const free = new Set<number>();
   let complete = true;
   const batches = chunk(appIds, PRICE_BATCH_SIZE);
 
@@ -190,13 +204,18 @@ async function getPricesBRL(appIds: number[]): Promise<{ prices: Map<number, num
         continue;
       }
       for (const [appId, entry] of Object.entries(result.value)) {
-        const data = entry?.success && entry.data && !Array.isArray(entry.data) ? entry.data : undefined;
-        if (data?.price_overview?.currency === 'BRL') prices.set(Number(appId), data.price_overview.initial);
+        if (!entry?.success || !entry.data) continue; // fora da loja ou indisponível no Brasil: segue pago, sem preço
+        if (Array.isArray(entry.data)) {
+          free.add(Number(appId)); // jogo grátis vem com `data: []`
+          continue;
+        }
+        const overview = entry.data.price_overview;
+        if (overview?.currency === 'BRL') prices.set(Number(appId), overview.initial);
       }
     }
   }
 
-  return { prices, complete };
+  return { prices, free, complete };
 }
 
 // ---------- O que a rota usa ----------
@@ -232,12 +251,12 @@ export async function getSteamLibrary(rawInput: string): Promise<SteamLibrary> {
     warnings.push('PLAYTIME_HIDDEN');
   }
 
-  // Preço só importa pra pilha (nunca abertos e mal começados). Ordenar deixa a chave do cache estável.
+  // Preço e "é grátis?" só importam pra pilha (nunca abertos e mal começados). Ordenar deixa a chave do cache estável.
   const pileIds = ownedGames
     .filter((game) => autoStateFor(game.playtime_forever) !== 'played')
     .map((game) => game.appid)
     .sort((a, b) => a - b);
-  const { prices, complete } = await getPricesBRL(pileIds);
+  const { prices, free, complete } = await getStoreInfo(pileIds);
   if (!complete) warnings.push('PRICES_PARTIAL');
 
   const games: Game[] = ownedGames
@@ -248,6 +267,7 @@ export async function getSteamLibrary(rawInput: string): Promise<SteamLibrary> {
       lastPlayedAt: game.rtime_last_played ? new Date(game.rtime_last_played * 1000).toISOString() : null,
       priceCents: prices.get(game.appid) ?? null,
       autoState: autoStateFor(game.playtime_forever),
+      isFree: free.has(game.appid) || PLAYTEST.test(game.name ?? ''),
       coverUrl: `${CDN}/${game.appid}/library_600x900.jpg`,
       headerUrl: `${CDN}/${game.appid}/header.jpg`,
     }))

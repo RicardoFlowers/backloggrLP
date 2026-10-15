@@ -34,20 +34,20 @@ await check('perfil público via link /id/ → 200 com números certos', async (
   assert.equal(body.profile.steamId, '76561198000000001');
   assert.deepEqual(body.warnings, []);
   assert.deepEqual(body.stats, {
-    totalGames: 8,
-    neverPlayed: 4,
+    totalGames: 9,
+    neverPlayed: 3,
     barelyPlayed: 2,
-    pileCount: 6,
-    pilePercent: 75,
-    estimatedHoursToClear: 108,
-    yearsAtOneHourPerDay: 0.3,
+    pileCount: 5,
+    pilePercent: 56,
+    estimatedHoursToClear: 90,
+    yearsAtOneHourPerDay: 0.2,
     pileValueCents: 22196,
-    pileGamesWithoutPrice: 2,
+    pileGamesWithoutPrice: 1,
     totalPlaytimeHours: 602,
   });
   assert.deepEqual(
     body.games.map((g) => g.name),
-    ['Celeste', 'Delisted', 'Disco Elysium', 'Dota 2', 'Elden Ring', 'Free game', 'Hades', 'Hollow Knight'],
+    ['Algum Jogo Playtest', 'Celeste', 'Delisted', 'Disco Elysium', 'Dota 2', 'Elden Ring', 'Free game', 'Hades', 'Hollow Knight'],
   );
   const celeste = body.games.find((g) => g.appId === 20);
   assert.equal(celeste.autoState, 'barely');
@@ -57,10 +57,14 @@ await check('perfil público via link /id/ → 200 com números certos', async (
   const hk = body.games.find((g) => g.appId === 10);
   assert.equal(hk.lastPlayedAt, null);
   assert.equal(body.games.find((g) => g.appId === 70).priceCents, null); // grátis
+  assert.equal(body.games.find((g) => g.appId === 70).isFree, true); // loja diz que é grátis
+  assert.equal(body.games.find((g) => g.appId === 90).isFree, true); // playtest pelo nome
+  assert.equal(body.games.find((g) => g.appId === 80).isFree, false); // fora da loja continua pago
+  assert.equal(body.games.find((g) => g.appId === 10).isFree, false);
   assert.equal(body.games.find((g) => g.appId === 30).priceCents, null); // jogado: nem busca preço
   assert.equal(count('resolve fulano key=test-key-123'), 1, 'resolve deveria ter sido chamado com a chave');
   assert.ok(logLines().some((l) => l === 'owned 76561198000000001 skip_unvetted_apps=false include_appinfo=true'));
-  assert.ok(logLines().some((l) => l === 'appdetails n=6 cc=br filters=price_overview'), 'só a pilha (6 jogos) vai pra busca de preço');
+  assert.ok(logLines().some((l) => l === 'appdetails n=7 cc=br filters=price_overview'), 'só os nunca abertos e mal começados (7 jogos) vão pra loja');
 });
 
 await check('segunda busca do mesmo perfil usa cache (nome→ID e preços), mas relê biblioteca', async () => {
@@ -77,7 +81,7 @@ await check('SteamID64 puro também funciona (sem resolver nome)', async () => {
   const before = count('resolve');
   const { status, body } = await call('76561198000000001');
   assert.equal(status, 200);
-  assert.equal(body.stats.pileCount, 6);
+  assert.equal(body.stats.pileCount, 5);
   assert.equal(count('resolve'), before);
 });
 

@@ -26,6 +26,11 @@ export interface Game {
   /** Preço cheio atual na Steam BR, em centavos. null = sem preço (grátis, fora da loja ou a busca falhou). */
   priceCents: number | null;
   autoState: AutoState;
+  /**
+   * Grátis pra jogar (free-to-play ou playtest). Não entra na pilha: ninguém se sente culpado
+   * por um jogo gratuito que testou 20 minutos, e multiplayer não tem como "zerar".
+   */
+  isFree: boolean;
   /** Capa vertical. Nem todo jogo tem: a tela precisa de fallback (onError -> headerUrl). */
   coverUrl: string;
   headerUrl: string;
@@ -88,8 +93,9 @@ export function autoStateFor(playtimeMinutes: number): AutoState {
   return 'played';
 }
 
-/** Está na pilha: a Steam diz que mal foi tocado e a pessoa ainda não marcou nada nele. */
+/** Está na pilha: jogo pago que a Steam diz que mal foi tocado e a pessoa ainda não marcou nada nele. */
 export function isInPile(game: Game, userStates: UserStates = {}): boolean {
+  if (game.isFree) return false;
   if (userStates[game.appId]) return false;
   return game.autoState !== 'played';
 }
